@@ -1,9 +1,4 @@
-package src;
-
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Pico {
     int health = 80;
@@ -34,7 +29,7 @@ public class Pico {
         System.out.println("피코가 평화롭게 혼자 놀고 있습니다~!");
         printPico();
 
-        // 10초 대기
+        // 3초 대기
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -55,15 +50,30 @@ public class Pico {
             public void run() {
                 System.out.println("\n\n( •ө•)💢 : 너무 늦었어!! 피코가 잔뜩 화가 났습니다!");
                 isTimeout = true;
-                // 팁: 여기서 health를 깎아도 재밌습니다 (예: health -= 10;)
-                System.out.print(">> 다음으로 넘어가려면 아무 숫자나 누르세요: ");
+                System.out.print(">> 다음으로 넘어가려면 아무 키나 누르고 엔터를 치세요: ");
             }
         };
 
         // 5초 반응 기다림
         timer.schedule(angryTask, 5000);
 
-        int input = sc.nextInt();
+        int input = -1;
+
+        while (true) {
+            try {
+                input = sc.nextInt();
+                break;
+            } catch (InputMismatchException e) {
+                sc.nextLine();
+
+                if (isTimeout) {
+                    break;
+                } else {
+
+                    System.out.print("\n( •ө•)💦 : 앗, 숫자로 입력해 주세요! 다시 선택: ");
+                }
+            }
+        }
 
         angryTask.cancel();
         timer.cancel();
@@ -77,7 +87,7 @@ public class Pico {
         } else if (randomIndex == input - 1) {
             System.out.println("\n휴~ 다행입니다. 피코가 다시 기분이 좋아졌습니다!");
             System.out.println("   ( •ө•)♡   ");
-            health += 10;
+            if(health <= 160) health += 10;
             if(randomIndex == 1) game(sc);
             System.out.println("현재 체력: " + health);
         } else {
@@ -109,38 +119,54 @@ public class Pico {
     }
 
     public void game(Scanner sc){
-        System.out.println("\n========== 🎮 놀이 목록 🎮 ==========");
-        System.out.println("1. 청기백기");
-        System.out.println("2. 암기게임");
-        System.out.println("3. 퀴즈");
-        System.out.print(">> 어떤 놀이를 할까요? (번호 입력): ");
+        while (true) { // 제대로 된 번호를 입력할 때까지 반복
+            System.out.println("\n========== 🎮 놀이 목록 🎮 ==========");
+            System.out.println("1. 청기백기");
+            System.out.println("2. 암기게임");
+            System.out.println("3. 퀴즈");
+            System.out.print(">> 어떤 놀이를 할까요? (번호 입력): ");
 
-        int gameChoice = sc.nextInt();
+            try {
+                int gameChoice = sc.nextInt();
+                System.out.println("\n----------------------------------");
 
-        System.out.println("\n----------------------------------");
-        switch (gameChoice) {
-            case 1:
-                FlagGame fg = new FlagGame();
-                int flagResult = fg.start();
-                this.level += flagResult;
+                switch (gameChoice) {
+                    case 1:
+                        FlagGame fg = new FlagGame();
+                        int flagResult = fg.start();
+                        this.level += flagResult;
+                        if (this.level < 0) this.level = 0;
+                        break;
+                    case 2:
+                        MemorizationGame mg = new MemorizationGame();
+                        int earnedLevel = mg.start();
+                        level += earnedLevel;
+                        if (level < 0) level = 0;
+                        break;
+                    case 3:
+                        QuizGame qg = new QuizGame();
+                        int getLevel = qg.play(sc);
+                        level += getLevel;
+                        if (level < 0) level = 0;
+                        break;
+                    default:
+                        System.out.println("\n( •ө•)? : 없는 놀이 번호입니다. 다시 선택해주세요!");
+                        continue;
+                }
 
-                if (this.level < 0) this.level = 0;
+                System.out.println("현재 레벨: " + level);
                 break;
-            case 2:
-                MemorizationGame mg = new MemorizationGame();
-                int earnedLevel = mg.start();
-                level += earnedLevel;
-                if(level < 0) level = 0;
-                break;
-            case 3:
 
-                break;
-            default:
-                System.out.println("잘못된 번호입니다. 피코가 어리둥절해 합니다.");
-                break;
+            } catch (InputMismatchException e) {
+                // 숫자가 아닌 문자를 입력했을 때 여기로 빠짐
+                System.out.println("\n( •ө•)💢 : 삐빅! 숫자로 입력해 주세요!");
+                sc.nextLine();
+            } catch (Exception e) {
+                // 혹시 모를 다른 에러 대비
+                System.out.println("\n( •ө•)💦 : 알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.");
+                sc.nextLine();
+            }
         }
-
-        System.out.println("현재 레벨: " + level);
     }
 
 }
