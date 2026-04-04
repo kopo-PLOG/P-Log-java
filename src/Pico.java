@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 public class Pico {
     int health = 80;
-    int level = 120;
+    int level = 0;
 
     boolean isTimeout;
     boolean isEvolution = false;
@@ -77,6 +77,8 @@ public class Pico {
         } else if (randomIndex == input - 1) {
             System.out.println("\n휴~ 다행입니다. 피코가 다시 기분이 좋아졌습니다!");
             System.out.println("   ( •ө•)♡   ");
+            health += 10;
+            if(randomIndex == 1) game(sc);
             System.out.println("현재 체력: " + health);
         } else {
             System.out.println("\n( •ө•)💢 : 원하는 게 아니잖아!! 피코가 실망했습니다.");
@@ -118,10 +120,17 @@ public class Pico {
         System.out.println("\n----------------------------------");
         switch (gameChoice) {
             case 1:
+                FlagGame fg = new FlagGame();
+                int flagResult = fg.start();
+                this.level += flagResult;
 
+                if (this.level < 0) this.level = 0;
                 break;
             case 2:
-
+                MemorizationGame mg = new MemorizationGame();
+                int earnedLevel = mg.start();
+                level += earnedLevel;
+                if(level < 0) level = 0;
                 break;
             case 3:
 

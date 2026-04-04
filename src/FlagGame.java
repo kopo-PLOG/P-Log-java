@@ -1,9 +1,7 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Random;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class FlagGame {
     final int totalRounds = 10;
@@ -12,6 +10,8 @@ public class FlagGame {
     final int timeLimit = 3000;
 
     Random random = new Random();
+    Scanner sc = new Scanner(System.in);
+    boolean isTimeout = false;
 
     String[][] problems = {
             {"청기 들어!", "b"},
@@ -26,13 +26,8 @@ public class FlagGame {
             {"백기는 들지 말고 청기만 들어!", "b"}
     };
 
-    private final BlockingQueue<String> inputQueue = new LinkedBlockingQueue<>();
-
     public int start() {
         int score = 0;
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-        startInputThread(br);
 
         int[] order = new int[problems.length];
         for (int i = 0; i < problems.length; i++) {
@@ -53,8 +48,6 @@ public class FlagGame {
         System.out.println("==============================");
 
         for (int round = 0; round < totalRounds; round++) {
-            inputQueue.clear();
-
             int idx = order[round];
             String question = problems[idx][0];
             String answer = problems[idx][1];
@@ -63,29 +56,37 @@ public class FlagGame {
             System.out.println("문제: " + question);
             System.out.print("입력 (b / w): ");
 
-            String userInput = null;
+            isTimeout = false;
 
-            try {
-                userInput = inputQueue.poll(timeLimit, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.out.println("\n입력 대기 중 오류가 발생했습니다.");
-                break;
-            }
+            Timer timer = new Timer();
+            TimerTask timeoutTask = new TimerTask() {
+                @Override
+                public void run() {
+                    isTimeout = true;
+                    System.out.print("\n⏰ 시간 초과! (아무 문자나 누르고 엔터를 치세요): ");
+                }
+            };
 
-            if (userInput == null) {
-                System.out.println("\n⏰ 시간 초과! 오답!");
+            // 3초 타이머 시작
+            timer.schedule(timeoutTask, timeLimit);
+
+            // 입력 대기 (여기서 스레드가 아닌 Scanner를 씁니다)
+            String userInput = sc.next();
+
+            timeoutTask.cancel();
+            timer.cancel();
+
+            if (isTimeout) {
+                System.out.println("너무 늦었습니다! 오답 처리!");
             } else {
                 String user = userInput.trim().toLowerCase();
-
                 if (user.equals(answer)) {
                     System.out.println("( ^ө^)b  정답이에요!!");
                     score++;
                 } else {
-                    System.out.println("( TөT )  틀렸어요... (입력: " + user + ", 정답: " + answer + ")");
+                    System.out.println("( TөT )  틀렸어요... (정답: " + answer + ")");
                 }
             }
-
             System.out.println("현재 점수: " + score);
         }
 
@@ -93,35 +94,11 @@ public class FlagGame {
         System.out.println(totalRounds + "문제 중 " + score + "문제 정답!");
 
         if (score >= 7) {
-            System.out.println("삐코가 즐거워합니다! 게이지 +" + levelUp);
+            System.out.println("피코가 즐거워합니다! 레벨 +" + levelUp);
             return levelUp;
         } else {
-            System.out.println("삐코가 아쉬워합니다... 게이지 -" + levelDown);
+            System.out.println("피코가 아쉬워합니다... 레벨 -" + levelDown);
             return -levelDown;
         }
-    }
-
-    private void startInputThread(BufferedReader br) {
-        Thread inputThread = new Thread(() -> {
-            while (true) {
-                try {
-                    String line = br.readLine();
-                    if (line != null) {
-                        inputQueue.offer(line);
-                    }
-                } catch (Exception e) {
-                    break;
-                }
-            }
-        });
-
-        inputThread.setDaemon(true);
-        inputThread.start();
-    }
-
-    public static void main(String[] args) {
-        FlagGame game = new FlagGame();
-        int result = game.start();
-        System.out.println("결과값: " + result);
     }
 }
